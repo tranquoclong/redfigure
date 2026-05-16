@@ -10,8 +10,9 @@ const PERSISTENT_COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 function baseOptions() {
   return {
     httpOnly: true,
+
     secure: process.env.NODE_ENV !== 'development',
-    sameSite: 'none' as const,
+    sameSite: 'lax' as const,
     path: REFRESH_COOKIE_PATH,
   };
 }
