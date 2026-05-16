@@ -528,7 +528,10 @@ export default function AdminCouponsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () => api.post("/coupons", formToPayload(form)),
+    mutationFn: () => {
+      const { isActive, ...rest } = form;
+      return api.post("/coupons", formToPayload(rest as any));
+    },
     onSuccess: () => {
       setError("");
       setForm({ ...emptyForm });

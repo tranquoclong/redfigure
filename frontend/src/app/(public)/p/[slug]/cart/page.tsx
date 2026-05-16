@@ -190,8 +190,8 @@ export default async function PreCartPage({ params, searchParams }: Props) {
             ĐỂ CÓ GIÁ TỐT NHẤT {formatCurrency(maxPrice)}
           </h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {sameBrand.map((p: Product) => (
-              <ProductCard key={p.id} product={p} />
+            {sameBrand.map((p: Product, i: number) => (
+              <ProductCard key={i} product={p} />
             ))}
           </div>
         </section>
@@ -203,8 +203,8 @@ export default async function PreCartPage({ params, searchParams }: Props) {
             SẢN PHẨM LIÊN QUAN
           </h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {relatedFiltered.map((p: Product) => (
-              <ProductCard key={p.id} product={p} />
+            {relatedFiltered.map((p: Product, i: number) => (
+              <ProductCard key={i} product={p} />
             ))}
           </div>
         </section>

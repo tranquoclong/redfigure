@@ -31,7 +31,7 @@ export function SectionHead({
                 className="h-px w-12"
                 style={{ background: "var(--grad-rule)" }}
               />
-              <span className="font-display text-xs uppercase tracking-[0.18em] text-white/72">
+              <span className="text-xs uppercase tracking-[0.18em] text-white/72">
                 {lbl}
               </span>
             </>

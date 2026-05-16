@@ -27,8 +27,8 @@ export function RecentlyViewedSection() {
         title="Sản phẩm đã xem gần đây"
       />
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
+        {products.map((p, i) => (
+          <ProductCard key={i} product={p} />
         ))}
       </div>
     </section>

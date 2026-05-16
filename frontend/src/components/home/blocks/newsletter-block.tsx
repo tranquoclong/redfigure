@@ -89,7 +89,7 @@ export function NewsletterBlock({ data }: Props) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-full px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:brightness-110 hover:-translate-y-px disabled:opacity-60"
+                  className="rounded-full px-7 py-3.5 text-[13px] font-bold uppercase tracking-[0.1em] text-white transition hover:brightness-110 hover:-translate-y-px disabled:opacity-60"
                   style={{
                     background: "var(--grad-cta)",
                     boxShadow: "var(--glow-purple)",

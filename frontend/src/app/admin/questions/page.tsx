@@ -309,7 +309,7 @@ export default function AdminQuestionsPage() {
                     rejectMutation.isPending ||
                     deleteMutation.isPending
                   }
-                  className="bg-primary"
+                  className="bg-purple"
                 >
                   {answerMutation.isPending
                     ? "Gửi..."
@@ -336,7 +336,7 @@ export default function AdminQuestionsPage() {
                   onClick={() => {
                     if (
                       confirm(
-                        "Excluir permanentemente esta pergunta? Esta ação não pode ser desfeita.",
+                        "Chắc chắn muốn xóa vĩnh viễn câu hỏi này? Thao tác này không thể hoàn tác.",
                       )
                     ) {
                       deleteMutation.mutate(selected.id);

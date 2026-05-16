@@ -353,8 +353,8 @@ export const DEFAULTS = {
         order: 7,
         isActive: true,
         data: {
-          eyebrow: '// 07 · What people say',
-          title: 'Reviews from those who have already bought',
+          eyebrow: '// 07 · Đánh giá',
+          title: 'Đánh giá sản phẩm',
           limit: 3,
         },
       },

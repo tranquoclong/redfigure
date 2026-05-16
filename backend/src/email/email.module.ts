@@ -1,7 +1,6 @@
 import {
   Global,
   Module,
-  Inject,
   OnModuleInit,
   OnModuleDestroy,
   Logger,
@@ -51,15 +50,7 @@ export class EmailModule implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(EmailModule.name);
   private worker: Worker | null = null;
 
-  constructor(
-    private readonly emailQueueService: EmailQueueService,
-    @Inject('REDIS_CONNECTION')
-    private readonly redisConnection: {
-      host: string;
-      port: number;
-      password?: string;
-    },
-  ) { }
+  constructor(private readonly emailQueueService: EmailQueueService) {}
 
   onModuleInit() {
     this.worker = new Worker(
@@ -78,7 +69,6 @@ export class EmailModule implements OnModuleInit, OnModuleDestroy {
     });
 
     this.worker.on('failed', (job, error) => {
-
       this.logger.error(
         `Email job ${job?.id} (${job?.name}) failed: ${error.message}`,
         error.stack,

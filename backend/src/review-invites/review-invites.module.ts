@@ -2,7 +2,6 @@ import {
   Module,
   OnModuleInit,
   OnModuleDestroy,
-  Inject,
   Logger,
 } from '@nestjs/common';
 import { Worker } from 'bullmq';
@@ -26,15 +25,7 @@ export class ReviewInvitesModule implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ReviewInvitesModule.name);
   private worker: Worker | null = null;
 
-  constructor(
-    private readonly processor: ReviewInvitesProcessor,
-    @Inject('REDIS_CONNECTION')
-    private readonly redisConnection: {
-      host: string;
-      port: number;
-      password?: string;
-    },
-  ) { }
+  constructor(private readonly processor: ReviewInvitesProcessor) {}
 
   onModuleInit() {
     this.worker = new Worker(

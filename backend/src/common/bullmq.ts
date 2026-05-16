@@ -23,8 +23,9 @@ export function getBullMqPrefix(): string | undefined {
   return raw && raw.length > 0 ? raw : undefined;
 }
 
-export function withBullMqPrefix<T extends Record<string, unknown>>(opts: T): T {
+export function withBullMqPrefix<T extends Record<string, unknown>>(opts: T): T & { sharedConnection: boolean } {
   const prefix = getBullMqPrefix();
-  if (!prefix) return opts;
-  return { ...opts, prefix };
+  const enhanced = { ...opts, sharedConnection: true };
+  if (!prefix) return enhanced as T & { sharedConnection: boolean };
+  return { ...enhanced, prefix } as T & { sharedConnection: boolean };
 }

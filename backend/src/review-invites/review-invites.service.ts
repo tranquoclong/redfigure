@@ -1,5 +1,4 @@
 import {
-  Inject,
   Injectable,
   Logger,
   OnModuleDestroy,
@@ -28,12 +27,6 @@ export class ReviewInvitesService implements OnModuleDestroy {
     private readonly settings: SettingsService,
     private readonly coupons: CouponsService,
     private readonly emailQueue: EmailQueueService,
-    @Inject('REDIS_CONNECTION')
-    private readonly redisConnection: {
-      host: string;
-      port: number;
-      password?: string;
-    },
   ) {
     this.queue = new Queue(
       QUEUE_NAME,

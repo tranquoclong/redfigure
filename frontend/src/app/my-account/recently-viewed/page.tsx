@@ -24,8 +24,8 @@ export default function RecentlyViewedPage() {
         />
       ) : (
         <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-          {items.map((p) => (
-            <ProductCard key={p.id} product={p} />
+          {items.map((p, i) => (
+            <ProductCard key={i} product={p} />
           ))}
         </div>
       )}

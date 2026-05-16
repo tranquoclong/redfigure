@@ -1,7 +1,5 @@
 import {
   Module,
-  forwardRef,
-  Inject,
   OnModuleInit,
   OnModuleDestroy,
   Logger,
@@ -34,17 +32,9 @@ import { captureBullError } from '../observability/bullmq-error-capture';
 export class OrdersModule implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(OrdersModule.name);
   private expirationWorker: Worker | null = null;
-  private trashCleanupWorker: Worker | null = null;
 
   constructor(
     private readonly orderExpirationService: OrderExpirationService,
-    private readonly trashCleanupService: TrashCleanupService,
-    @Inject('REDIS_CONNECTION')
-    private readonly redisConnection: {
-      host: string;
-      port: number;
-      password?: string;
-    },
   ) { }
 
   onModuleInit() {
@@ -80,43 +70,9 @@ export class OrdersModule implements OnModuleInit, OnModuleDestroy {
     });
 
     this.logger.log('Order expiration worker started');
-
-    this.trashCleanupWorker = new Worker(
-      'order-trash-cleanup',
-      async () => {
-        await this.trashCleanupService.processCleanup();
-      },
-      withBullMqPrefix({
-        connection: getSharedBullMqConnection(),
-        concurrency: 1,
-      }),
-    );
-
-    this.trashCleanupWorker.on('completed', () => {
-      this.logger.log('Trash cleanup job completed');
-    });
-
-    this.trashCleanupWorker.on('failed', (job, error) => {
-      this.logger.error(
-        `Trash cleanup job failed: ${error.message}`,
-        error.stack,
-      );
-      captureBullError(error, 'job_failed', 'order-trash-cleanup', job);
-    });
-
-    this.trashCleanupWorker.on('error', (error) => {
-      this.logger.error(
-        `Trash cleanup worker error: ${error.message}`,
-        error.stack,
-      );
-      captureBullError(error, 'worker_error', 'order-trash-cleanup');
-    });
-
-    this.logger.log('Trash cleanup worker started');
   }
 
   async onModuleDestroy() {
     await this.expirationWorker?.close();
-    await this.trashCleanupWorker?.close();
   }
 }

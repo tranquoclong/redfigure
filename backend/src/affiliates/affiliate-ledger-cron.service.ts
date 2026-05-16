@@ -1,110 +1,26 @@
 import {
   Injectable,
-  Inject,
   Logger,
-  OnModuleInit,
-  OnModuleDestroy,
 } from '@nestjs/common';
-import { Queue } from 'bullmq';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 import { AffiliateLedgerService } from './affiliate-ledger.service';
 import { AffiliateFraudDetectorService } from './affiliate-fraud-detector.service';
 import { computeLedgerHash, LedgerHashInput } from './affiliate-ledger-hash';
-import { getSharedBullMqConnection, withBullMqPrefix } from '../common/bullmq';
-import { captureBullError } from '../observability/bullmq-error-capture';
-
-const APPROVAL_JOB_ID = 'affiliate-ledger-approve-recurring';
-const INVARIANT_JOB_ID = 'affiliate-ledger-invariant-recurring';
-const FRAUD_SCAN_JOB_ID = 'affiliate-fraud-scan-recurring';
-const CHAIN_CHECK_JOB_ID = 'affiliate-ledger-chain-check-recurring';
 
 @Injectable()
-export class AffiliateLedgerCronService
-  implements OnModuleInit, OnModuleDestroy {
+export class AffiliateLedgerCronService {
   private readonly logger = new Logger(AffiliateLedgerCronService.name);
-  private queue: Queue | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
     private readonly ledger: AffiliateLedgerService,
     private readonly fraudDetector: AffiliateFraudDetectorService,
-    @Inject('REDIS_CONNECTION')
-    private readonly redisConnection: {
-      host: string;
-      port: number;
-      password?: string;
-    },
   ) { }
 
-  async onModuleInit() {
-    this.queue = new Queue(
-      'affiliate-ledger',
-      withBullMqPrefix({
-        connection: getSharedBullMqConnection(),
-        defaultJobOptions: {
-          attempts: 3,
-          backoff: { type: 'exponential', delay: 30_000 },
-          removeOnComplete: { count: 30 },
-          removeOnFail: { count: 30 },
-        },
-      }),
-    );
-
-    this.queue.on('error', (err) => {
-      this.logger.error(`Queue error: ${err.message}`, err.stack);
-      captureBullError(err, 'queue_error', 'affiliate-ledger');
-    });
-
-    try {
-      await this.queue.add(
-        'approve-pending-commissions',
-        {},
-        {
-          repeat: { pattern: '0 2 * * *' },
-          jobId: APPROVAL_JOB_ID,
-        },
-      );
-      await this.queue.add(
-        'invariant-check',
-        {},
-        {
-          repeat: { pattern: '0 4 * * *' },
-          jobId: INVARIANT_JOB_ID,
-        },
-      );
-      await this.queue.add(
-        'fraud-scan',
-        {},
-        {
-          repeat: { pattern: '0 5 * * *' },
-          jobId: FRAUD_SCAN_JOB_ID,
-        },
-      );
-      await this.queue.add(
-        'chain-check',
-        {},
-        {
-          repeat: { pattern: '0 6 * * *' },
-          jobId: CHAIN_CHECK_JOB_ID,
-        },
-      );
-      this.logger.log(
-        'Affiliate ledger crons scheduled (02:00 approval, 04:00 invariant, 05:00 fraud scan, 06:00 chain check)',
-      );
-    } catch (err) {
-      this.logger.error(
-        `Failed to schedule affiliate ledger crons: ${err instanceof Error ? err.message : String(err)
-        }`,
-      );
-    }
-  }
-
-  async onModuleDestroy() {
-    await this.queue?.close();
-  }
-
+  @Cron('0 2 * * *')
   async processApprovals(): Promise<void> {
     const raw = await this.settings.get('affiliate_hold_days_after_delivery');
     const holdDays = Number.isFinite(Number(raw)) ? Number(raw) : 7;
@@ -158,6 +74,7 @@ export class AffiliateLedgerCronService
     }
   }
 
+  @Cron('0 4 * * *')
   async processInvariantCheck(): Promise<void> {
     const rows = await this.prisma.$queryRaw<
       { affiliateId: string; balance: string }[]
@@ -180,6 +97,7 @@ export class AffiliateLedgerCronService
     }
   }
 
+  @Cron('0 5 * * *')
   async processFraudScan(): Promise<void> {
     const result = await this.fraudDetector.scanSuspiciousSessions();
     if (result.flaggedCount > 0) {
@@ -191,6 +109,7 @@ export class AffiliateLedgerCronService
     }
   }
 
+  @Cron('0 6 * * *')
   async processChainIntegrity(): Promise<void> {
     const secret = process.env.AFFILIATE_LEDGER_HMAC_SECRET;
     if (!secret || secret.length < 32) {

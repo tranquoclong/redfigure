@@ -457,8 +457,8 @@ export default async function ProductPage({ params }: Props) {
             more={{ href: "/products" }}
           />
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {related.map((p: Product) => (
-              <ProductCard key={p.id} product={p} />
+            {related.map((p: Product, i: number) => (
+              <ProductCard key={i} product={p} />
             ))}
           </div>
         </section>

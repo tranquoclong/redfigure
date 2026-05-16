@@ -62,9 +62,7 @@ export function ProductQuestionsSection({
     <div>
       <div className="mb-6 flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h2 className="text-2xl text-white [font-family:var(--font-orbitron)] tracking-wider">
-            CÂU HỎI
-          </h2>
+          <h2 className="text-2xl text-white tracking-wider">CÂU HỎI</h2>
           <p className="text-sm text-white/60 mt-1">
             Câu hỏi đã được trả lời bởi Red Figure.
           </p>
@@ -72,7 +70,7 @@ export function ProductQuestionsSection({
         {!formOpen && (
           <Button
             onClick={() => setFormOpen(true)}
-            className="bg-magenta hover:bg-magenta/90 text-white [font-family:var(--font-orbitron)] tracking-wide"
+            className="bg-magenta hover:bg-magenta/90 text-white tracking-wide"
           >
             <Plus className="h-4 w-4 mr-1" />
             Đặt câu hỏi
@@ -152,7 +150,7 @@ export function ProductQuestionsSection({
 
               {q.answer && (
                 <div className="ml-8 pl-4 border-l-2 border-magenta/70 mt-3">
-                  <p className="text-xs text-magenta font-semibold [font-family:var(--font-orbitron)] tracking-wider uppercase mb-1">
+                  <p className="text-xs text-magenta font-semibold tracking-wider uppercase mb-1">
                     Câu trả lời của Red Figure
                   </p>
                   <p className="text-white/85 whitespace-pre-wrap">

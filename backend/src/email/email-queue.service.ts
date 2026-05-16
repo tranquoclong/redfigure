@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Queue, JobsOptions } from 'bullmq';
 import { EmailService } from './email.service';
 import { getSharedBullMqConnection, withBullMqPrefix } from '../common/bullmq';
@@ -43,15 +43,7 @@ export class EmailQueueService implements OnModuleDestroy {
   private readonly logger = new Logger(EmailQueueService.name);
   private queue: Queue;
 
-  constructor(
-    private readonly emailService: EmailService,
-    @Inject('REDIS_CONNECTION')
-    private readonly redisConnection: {
-      host: string;
-      port: number;
-      password?: string;
-    },
-  ) {
+  constructor(private readonly emailService: EmailService) {
     this.queue = new Queue(
       'email',
       withBullMqPrefix({

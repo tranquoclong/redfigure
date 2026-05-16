@@ -96,7 +96,7 @@ function PromoEyebrow({ eyebrow }: { eyebrow: string }) {
             className="h-px w-10"
             style={{ background: "var(--grad-rule)" }}
           />
-          <span className="font-display text-xs uppercase tracking-[0.18em] text-white/72">
+          <span className="text-xs uppercase tracking-[0.18em] text-white/72">
             {lbl}
           </span>
         </>

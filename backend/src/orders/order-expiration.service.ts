@@ -1,7 +1,7 @@
 import {
   Injectable,
-  Inject,
   forwardRef,
+  Inject,
   Logger,
   OnModuleDestroy,
 } from '@nestjs/common';
@@ -32,12 +32,6 @@ export class OrderExpirationService implements OnModuleDestroy {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => OrdersService))
     private readonly ordersService: OrdersService,
-    @Inject('REDIS_CONNECTION')
-    private readonly redisConnection: {
-      host: string;
-      port: number;
-      password?: string;
-    },
   ) {
     this.queue = new Queue(
       'order-expiration',
