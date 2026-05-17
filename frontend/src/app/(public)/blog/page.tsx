@@ -25,19 +25,15 @@ export default async function BlogPage() {
   const posts = await getPosts();
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-10">
-        <div className="text-xs uppercase tracking-[0.3em] text-cyan">
-          {"// blog"}
-        </div>
-        <h1 className="mt-2 text-4xl md:text-5xl text-white [font-family:var(--font-orbitron)]">
-          BLOG
-        </h1>
-        <p className="mt-3 text-white/60">
-          Hướng dẫn và tin tức về mô hình, hội họa và sưu tập. Học hỏi kỹ thuật
-          và khám phá các sản phẩm mới.
-        </p>
-      </div>
+    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-16">
+      <h1 className="text-4xl md:text-5xl font-black mb-2 [font-family:var(--font-orbitron)] tracking-wide text-white">
+        Blog
+      </h1>
+      <div className="h-1 w-20 bg-gradient-to-r from-magenta to-cyan rounded-full mb-6" />
+      <p className="text-white/60 mb-10">
+        Tin tức về mô hình, hội họa và sưu tập. Học hỏi kỹ thuật và khám phá các
+        sản phẩm mới.
+      </p>
 
       {posts.data.length === 0 ? (
         <p className="text-white/50">Không có bài viết.</p>

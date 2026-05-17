@@ -21,6 +21,7 @@ import { api } from "@/lib/api-client";
 import { extractError } from "@/lib/extract-error";
 interface SettingsCardProps {
   title: string;
+  description?: string;
   fields: Array<{
     key: string;
     label: string;
@@ -31,7 +32,12 @@ interface SettingsCardProps {
   values: Record<string, string>;
 }
 
-function SettingsCard({ title, fields, values }: SettingsCardProps) {
+function SettingsCard({
+  title,
+  description,
+  fields,
+  values,
+}: SettingsCardProps) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
@@ -69,6 +75,9 @@ function SettingsCard({ title, fields, values }: SettingsCardProps) {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">{title}</CardTitle>
+        {description && (
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (

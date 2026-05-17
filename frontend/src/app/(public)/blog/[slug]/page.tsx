@@ -64,7 +64,7 @@ export default async function BlogPostPage({ params }: Props) {
   }
 
   return (
-    <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
+    <article className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-16">
       <BreadcrumbSchema
         items={[
           { name: "Trang chủ", url: SITE_URL },
@@ -86,14 +86,14 @@ export default async function BlogPostPage({ params }: Props) {
       />
       <Link
         href="/blog"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6"
+        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8"
       >
         <ArrowLeft className="h-4 w-4" />
         Quay về blog
       </Link>
 
       {post.coverImage && (
-        <div className="relative aspect-[2/1] overflow-hidden rounded-lg mb-8 bg-muted">
+        <div className="relative aspect-[2/1] overflow-hidden rounded-2xl mb-10 border border-purple/20">
           <Image
             src={post.coverImage}
             alt={post.title}
@@ -105,13 +105,18 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
       )}
 
-      <h1 className="text-3xl sm:text-4xl font-bold mb-4">{post.title}</h1>
+      {post.publishedAt && (
+        <p className="text-xs uppercase tracking-wider text-cyan/70 mb-3">
+          {formatDateLong(post.publishedAt)}
+        </p>
+      )}
 
-      <p className="text-sm text-muted-foreground mb-8">
-        {post.publishedAt ? formatDateLong(post.publishedAt) : ""}
-      </p>
+      <h1 className="text-4xl md:text-5xl font-black mb-2 tracking-wide text-white">
+        {post.title}
+      </h1>
+      <div className="h-1 w-20 bg-gradient-to-r from-magenta to-cyan rounded-full mb-10" />
 
-      <SafeHtml className="prose prose-lg max-w-none" html={post.content} />
+      <SafeHtml className="prose-elite" html={post.content} />
     </article>
   );
 }

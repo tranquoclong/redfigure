@@ -14,7 +14,6 @@ import {
 import type { Response, Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { PaymentsService } from './payments.service';
-import { CheckoutLogService } from './checkout-log.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -29,7 +28,6 @@ export class PaymentsController {
 
     constructor(
         private readonly paymentsService: PaymentsService,
-        private readonly checkoutLog: CheckoutLogService,
     ) { }
 
     // ─── Thông tin phương thức thanh toán ───────────────────────────────────
@@ -63,36 +61,8 @@ export class PaymentsController {
                 { id: reqUser.id, role: reqUser.role },
             );
 
-            await this.checkoutLog.log({
-                step: 'create_payment',
-                status: 'success',
-                orderId: dto.orderId,
-                userId,
-                method: dto.method,
-                request: dto,
-                response: {
-                    paymentId: result.id,
-                    status: result.status,
-                },
-                duration: Date.now() - start,
-                ip,
-                userAgent,
-            });
-
             return { data: result };
         } catch (err) {
-            await this.checkoutLog.log({
-                step: 'create_payment',
-                status: 'error',
-                orderId: dto.orderId,
-                userId,
-                method: dto.method,
-                request: dto,
-                error: err,
-                duration: Date.now() - start,
-                ip,
-                userAgent,
-            });
             throw err;
         }
     }
@@ -109,26 +79,8 @@ export class PaymentsController {
         const start = Date.now();
         try {
             const result = await this.paymentsService.processSepayWebhook(body);
-            await this.checkoutLog.log({
-                step: 'payment_webhook',
-                status: 'success',
-                request: { gateway: 'sepay', transactionId: body.id },
-                metadata: {
-                    sepayId: body.id,
-                    transferAmount: body.transferAmount,
-                    transferType: body.transferType,
-                },
-                duration: Date.now() - start,
-            });
             return result;
         } catch (err) {
-            await this.checkoutLog.log({
-                step: 'payment_webhook',
-                status: 'error',
-                request: { gateway: 'sepay', transactionId: body.id },
-                error: err,
-                duration: Date.now() - start,
-            });
             throw err;
         }
     }
@@ -170,11 +122,5 @@ export class PaymentsController {
     @Get(':orderId')
     async findByOrder(@Param('orderId') orderId: string) {
         return { data: await this.paymentsService.findByOrderId(orderId) };
-    }
-
-    @Roles('ADMIN')
-    @Get(':orderId/logs')
-    async getCheckoutLogs(@Param('orderId') orderId: string) {
-        return { data: await this.checkoutLog.findByOrder(orderId) };
     }
 }

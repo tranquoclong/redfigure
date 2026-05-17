@@ -13,9 +13,7 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { StockService } from '../stock/stock.service';
 import { OrderExpirationService } from '../orders/order-expiration.service';
-import { MetaCapiService } from './meta-capi.service';
 import { SettingsService } from '../settings/settings.service';
-import { CheckoutLogService } from './checkout-log.service';
 import { EmailQueueService } from '../email/email-queue.service';
 import { AffiliateCommissionService } from '../affiliates/affiliate-commission.service';
 import { captureFailOpen } from '../observability/fail-open-capture';
@@ -50,9 +48,7 @@ export class PaymentsService {
         private stockService: StockService,
         @Inject(forwardRef(() => OrderExpirationService))
         private orderExpirationService: OrderExpirationService,
-        private metaCapi: MetaCapiService,
         private settingsService: SettingsService,
-        private checkoutLog: CheckoutLogService,
         private emailQueue: EmailQueueService,
         private affiliateCommissionService: AffiliateCommissionService,
         private redis: RedisService,
@@ -211,14 +207,6 @@ export class PaymentsService {
         void promise.catch((err) => {
             this.logger.error(
                 `Email dispatch failed (${context}): ${err instanceof Error ? err.message : String(err)}`,
-            );
-        });
-    }
-
-    private dispatchMetaPurchase(orderId: string): void {
-        void this.metaCapi.sendPurchaseEvent(orderId).catch((err) => {
-            this.logger.error(
-                `Meta CAPI dispatch failed for order ${orderId}: ${err instanceof Error ? err.message : String(err)}`,
             );
         });
     }
@@ -512,8 +500,6 @@ export class PaymentsService {
         } catch (err) {
             captureFailOpen(err, 'sepay_webhook_cancel_expiration', { orderId });
         }
-
-        this.dispatchMetaPurchase(orderId);
 
         this.fireAndForget(
             this.affiliateCommissionService.createForOrder(orderId),

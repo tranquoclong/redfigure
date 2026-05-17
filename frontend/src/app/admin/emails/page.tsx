@@ -514,8 +514,8 @@ export default function AdminEmailsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 items-start">
+        <div className="space-y-2 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1">
           {templates?.map((tpl) => (
             <button
               key={tpl.id}
@@ -673,7 +673,7 @@ export default function AdminEmailsPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 xl:grid-cols-[1fr_260px] gap-4">
+            <div className="grid grid-cols-1 xl:grid-cols-[1fr_260px] gap-4 items-start">
               <div>
                 {viewMode === "visual" ? (
                   <div className="border rounded-md overflow-hidden bg-white">
@@ -699,7 +699,7 @@ export default function AdminEmailsPage() {
                 )}
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto xl:pr-1">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="text-sm font-semibold">Tags có sẵn</h3>
@@ -727,7 +727,7 @@ export default function AdminEmailsPage() {
                     Nhấn vào thẻ để chèn vào con trỏ. Sử dụng biểu tượng để sao
                     chép.
                   </p>
-                  <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
+                  <div className="space-y-1.5">
                     {availableTags.map((tagInfo) => (
                       <div
                         key={tagInfo.tag}

@@ -1,8 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
-import { CheckoutLogService } from './checkout-log.service';
-import { MetaCapiService } from './meta-capi.service';
 import { StockModule } from '../stock/stock.module';
 import { OrdersModule } from '../orders/orders.module';
 import { SettingsModule } from '../settings/settings.module';
@@ -24,9 +22,7 @@ import { ProductsModule } from '../products/products.module';
     controllers: [PaymentsController],
     providers: [
         PaymentsService,
-        CheckoutLogService,
-        MetaCapiService,
     ],
-    exports: [PaymentsService, CheckoutLogService],
+    exports: [PaymentsService],
 })
 export class PaymentsModule { }
