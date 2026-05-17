@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import Image from "next/image";
 import { Truck, Trash2, Minus, Plus, ShoppingCart } from "lucide-react";
@@ -31,6 +32,17 @@ export function MiniCart() {
   const itemCount = useCartStore((s) => s.itemCount);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { updateQuantity, removeItem } = useCart();
+
+  const { data: pixDiscount = 0 } = useQuery({
+    queryKey: ["payment-methods"],
+    queryFn: async () => {
+      const { data } = await api.get("/payments/methods");
+      type M = { id: string; discount?: number };
+      const list = Array.isArray(data?.data) ? (data.data as M[]) : [];
+      return list.find((m) => m.id === "pix")?.discount ?? 0;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [direction, setDirection] = useState<"right" | "bottom">("bottom");
   const [freeShippingInfo, setFreeShippingInfo] =
@@ -353,14 +365,16 @@ export function MiniCart() {
                   {formatCurrency(subtotal)}
                 </span>
               </div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-[11px] [font-family:var(--font-mono)] text-cyan">
-                  — hoặc QR
-                </span>
-                <span className="text-[12px] font-bold [font-family:var(--font-mono)] text-cyan">
-                  {formatCurrency(subtotal * 0.95)} (-5%)
-                </span>
-              </div>
+              {pixDiscount > 0 && (
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[11px] [font-family:var(--font-mono)] text-cyan">
+                    — hoặc QR
+                  </span>
+                  <span className="text-[12px] font-bold [font-family:var(--font-mono)] text-cyan">
+                    {formatCurrency(subtotal * (1 - pixDiscount / 100))}
+                  </span>
+                </div>
+              )}
               <p className="pt-0.5 text-[10px] [font-family:var(--font-mono)] text-white/40">
                 Phí vận chuyển và thuế được tính khi thanh toán.
               </p>

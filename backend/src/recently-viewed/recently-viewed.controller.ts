@@ -39,6 +39,7 @@ export class RecentlyViewedController {
 
   @Public()
   @Get()
+  @Throttle({ short: { limit: 60, ttl: 60000 } })
   async getRecentlyViewed(
     @CurrentUser() user: { id: string } | undefined,
     @Headers('x-session-id') sessionId: string | undefined,

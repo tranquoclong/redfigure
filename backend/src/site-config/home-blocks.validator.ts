@@ -402,22 +402,36 @@ function validateTrustStrip(data: unknown, ctx: FieldContext) {
   };
 }
 
-const VALIDATORS: ReadonlyMap<BlockType, DataValidator> = new Map<
-  BlockType,
-  DataValidator
->([
-  ['hero-carousel', validateHeroCarousel],
-  ['categories-strip', validateCategoriesStrip],
-  ['latest-products', validateLatestProducts],
-  ['featured-products', validateFeaturedProducts],
-  ['promo-banner', validatePromoBanner],
-  ['how-it-works', validateHowItWorks],
-  ['reviews', validateReviews],
-  ['faq', validateFaq],
-  ['custom-quote', validateCustomQuote],
-  ['newsletter', validateNewsletter],
-  ['trust-strip', validateTrustStrip],
-]);
+function dispatchValidator(
+  type: BlockType,
+  data: unknown,
+  ctx: FieldContext,
+): unknown {
+  switch (type) {
+    case 'hero-carousel':
+      return validateHeroCarousel(data, ctx);
+    case 'categories-strip':
+      return validateCategoriesStrip(data, ctx);
+    case 'latest-products':
+      return validateLatestProducts(data, ctx);
+    case 'featured-products':
+      return validateFeaturedProducts(data, ctx);
+    case 'promo-banner':
+      return validatePromoBanner(data, ctx);
+    case 'how-it-works':
+      return validateHowItWorks(data, ctx);
+    case 'reviews':
+      return validateReviews(data, ctx);
+    case 'faq':
+      return validateFaq(data, ctx);
+    case 'custom-quote':
+      return validateCustomQuote(data, ctx);
+    case 'newsletter':
+      return validateNewsletter(data, ctx);
+    case 'trust-strip':
+      return validateTrustStrip(data, ctx);
+  }
+}
 
 interface RawBlock {
   id: unknown;
@@ -478,9 +492,7 @@ export function validateAndNormalizeBlocks(
     if (typeof raw.isActive !== 'boolean')
       bad({ path: `${ctx.path}.isActive` }, 'must be boolean');
 
-    const validator = VALIDATORS.get(type);
-    if (!validator) bad({ path: `${ctx.path}.type` }, `unknown type '${type}'`);
-    const validatedData = validator(raw.data, {
+    const validatedData = dispatchValidator(type, raw.data, {
       path: `${ctx.path}.data`,
     });
 
@@ -517,12 +529,7 @@ export function parseStoredBlocks(
         continue;
       }
       if (typeof raw.isActive !== 'boolean') continue;
-      const validator = VALIDATORS.get(raw.type);
-      if (!validator) {
-        options?.onWarn?.(`block[${i}] validator ausente: ${String(raw.type)}`);
-        continue;
-      }
-      const data = validator(raw.data, {
+      const data = dispatchValidator(raw.type, raw.data, {
         path: `blocks[${i}].data`,
       });
       seen.add(raw.id);

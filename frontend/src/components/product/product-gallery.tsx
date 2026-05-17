@@ -131,7 +131,7 @@ export function ProductGallery({
           )}
 
           {current.caption && (
-            <div className="pointer-events-none absolute left-1/2 top-3 z-10 flex max-w-[80%] -translate-x-1/2 items-start gap-2 rounded-md border border-gold/45 bg-ink/85 px-3 py-1.5 backdrop-blur">
+            <div className="pointer-events-none absolute left-3 bottom-3 z-10 flex max-w-[80%] -translate-x-1/2 items-start gap-2 rounded-md border border-gold/45 bg-ink/85 px-3 py-1.5 backdrop-blur">
               <AlertTriangle className="size-3.5 shrink-0 text-gold mt-0.5" />
               <span className="min-w-0 text-[12px] leading-snug text-gold whitespace-normal break-words line-clamp-3">
                 {current.caption}
