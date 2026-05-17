@@ -13,6 +13,7 @@ const StoreUserSchema = z
     name: z.string().max(255).optional(),
     role: z.enum(['ADMIN', 'CUSTOMER']).catch('CUSTOMER'),
     emailMarketingOptOut: z.boolean().optional(),
+    isOwner: z.boolean().catch(false).optional(),
   })
   .strip();
 

@@ -15,6 +15,7 @@ import { UnsubscribeService } from './unsubscribe.service';
 import { SettingsService } from '../settings/settings.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
+import { ChangeUserRoleDto } from './dto/change-user-role.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateEmailPreferencesDto } from './dto/email-preferences.dto';
 import { UnsubscribeDto } from './dto/unsubscribe.dto';
@@ -186,5 +187,28 @@ export class UsersController {
   ) {
     const updated = await this.usersService.adminUpdateUser(id, dto, admin.id);
     return { data: updated };
+  }
+
+  @Roles('ADMIN')
+  @Throttle({ short: { limit: 5, ttl: 60_000 } })
+  @Put(':id/role')
+  async changeRole(
+    @Param('id') id: string,
+    @Body() dto: ChangeUserRoleDto,
+    @CurrentUser() admin: { id: string },
+  ) {
+    const updated = await this.usersService.changeUserRole(
+      id,
+      dto.role,
+      admin.id,
+      dto.reason,
+    );
+    return { data: updated };
+  }
+
+  @Roles('ADMIN')
+  @Get(':id/role-changes')
+  async getUserRoleChanges(@Param('id') id: string) {
+    return { data: await this.usersService.listUserRoleChanges(id) };
   }
 }

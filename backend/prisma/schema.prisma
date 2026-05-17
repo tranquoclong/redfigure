@@ -17,7 +17,8 @@ model User {
   name     String?
   password String
   role     UserRole @default(CUSTOMER)
-
+  roleChangesAsTarget UserRoleChange[] @relation("UserRoleChangeTarget")
+  roleChangesAsActor  UserRoleChange[] @relation("UserRoleChangeActor")
   passwordSet Boolean @default(true)
 
   marketingConsent Boolean @default(false)
@@ -122,6 +123,24 @@ model LoginCode {
 enum UserRole {
   ADMIN
   CUSTOMER
+}
+
+model UserRoleChange {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation("UserRoleChangeTarget", fields: [userId], references: [id], onDelete: Cascade)
+  fromRole    UserRole
+  toRole      UserRole
+  changedById String
+  changedBy   User     @relation("UserRoleChangeActor", fields: [changedById], references: [id], onDelete: Restrict)
+  reason      String?  @db.VarChar(500)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([changedById])
+  @@index([createdAt])
+  @@map("user_role_changes")
 }
 
 model Address {

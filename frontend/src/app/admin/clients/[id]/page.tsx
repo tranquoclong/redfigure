@@ -4,6 +4,17 @@ import type { ApiRecord } from "@/types/api";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/auth-store";
+import { ShieldAlert } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft,
   Save,
@@ -62,6 +73,12 @@ export default function AdminClientDetailPage() {
   const [editPhone, setEditPhone] = useState("");
   const [editActive, setEditActive] = useState(true);
   const [error, setError] = useState("");
+
+  const currentUser = useAuthStore((s) => s.user);
+  const [roleDialog, setRoleDialog] = useState(false);
+  const [roleConfirmEmail, setRoleConfirmEmail] = useState("");
+  const [roleReason, setRoleReason] = useState("");
+  const [roleError, setRoleError] = useState("");
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["admin", "user", id],
@@ -157,6 +174,33 @@ export default function AdminClientDetailPage() {
     },
     onError: (err) => {
       setError(extractError(err));
+    },
+  });
+
+  const targetRole = user?.role === "ADMIN" ? "CUSTOMER" : "ADMIN";
+  const targetIsPromote = targetRole === "ADMIN";
+  const targetEmail = (user?.email as string | undefined) ?? "";
+  const emailMatches =
+    roleConfirmEmail.trim().toLowerCase() === targetEmail.toLowerCase();
+
+  const roleMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await api.put(`/users/${id}/role`, {
+        role: targetRole,
+        reason: roleReason.trim() || undefined,
+      });
+      return data.data;
+    },
+    onSuccess: () => {
+      setRoleError("");
+      setRoleDialog(false);
+      setRoleConfirmEmail("");
+      setRoleReason("");
+      queryClient.invalidateQueries({ queryKey: ["admin", "user", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+    onError: (err) => {
+      setRoleError(extractError(err, "admin-role-change"));
     },
   });
 
@@ -617,8 +661,121 @@ export default function AdminClientDetailPage() {
               )}
             </CardContent>
           </Card>
+          {currentUser?.isOwner && currentUser.id !== (user?.id as string) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Shield className="h-4 w-4" /> Permissions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Vai trò hiện tại
+                    </p>
+                    <Badge
+                      variant={user?.role === "ADMIN" ? "default" : "secondary"}
+                    >
+                      {user?.role as string}
+                    </Badge>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant={targetIsPromote ? "default" : "destructive"}
+                    onClick={() => {
+                      setRoleError("");
+                      setRoleConfirmEmail("");
+                      setRoleReason("");
+                      setRoleDialog(true);
+                    }}
+                  >
+                    <ShieldAlert className="h-3.5 w-3.5 mr-1" />
+                    {targetIsPromote ? "Tăng lên ADMIN" : "Hạ xuống CUSTOMER"}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Owner có thể tăng/giảm vai trò. Mọi thay đổi sẽ được ghi lại
+                  trong audit log.
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
+      <Dialog
+        open={roleDialog}
+        onOpenChange={(open) => !open && setRoleDialog(false)}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {targetIsPromote ? "Thăng chức lên ADMIN?" : "Hạ xuống CUSTOMER?"}
+            </DialogTitle>
+            <DialogDescription className="space-y-2">
+              <span className="block">
+                {targetIsPromote
+                  ? "Sẽ cấp quyền truy cập vào bảng quản trị. Hãy đảm bảo rằng bạn tin tưởng người dùng này."
+                  : "Sẽ xóa tất cả quyền truy cập quản trị của tài khoản này."}
+              </span>
+              <span className="block font-mono text-xs bg-muted/40 rounded p-2">
+                {targetEmail}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="confirm-email" className="text-xs">
+                Nhập email người dùng để xác nhận:
+              </Label>
+              <Input
+                id="confirm-email"
+                type="email"
+                value={roleConfirmEmail}
+                onChange={(e) => setRoleConfirmEmail(e.target.value)}
+                placeholder={targetEmail}
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role-reason" className="text-xs">
+                Lý do (tùy chọn, sẽ được ghi lại):
+              </Label>
+              <Textarea
+                id="role-reason"
+                value={roleReason}
+                onChange={(e) => setRoleReason(e.target.value)}
+                placeholder="Ví dụ: admin mới được tuyển"
+                rows={2}
+                maxLength={500}
+              />
+            </div>
+
+            {roleError && (
+              <p className="text-xs text-destructive">{roleError}</p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRoleDialog(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant={targetIsPromote ? "default" : "destructive"}
+              disabled={!emailMatches || roleMutation.isPending}
+              onClick={() => roleMutation.mutate()}
+            >
+              {roleMutation.isPending
+                ? "Áp dụng..."
+                : targetIsPromote
+                  ? "Xác nhận tăng"
+                  : "Xác nhận hạ"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

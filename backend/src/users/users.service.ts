@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { PasswordPolicyService } from '../auth/password-policy.service';
 import { SettingsService } from '../settings/settings.service';
+import { isOwnerEmail } from '../auth/owner.helper';
 import * as bcrypt from 'bcrypt';
 
 const SALT_ROUNDS = 12;
@@ -151,7 +152,10 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return {
+      ...user,
+      isOwner: isOwnerEmail(user.email),
+    };
   }
 
   async getProfile(userId: string) {
@@ -265,6 +269,9 @@ export class UsersService {
   ) {
 
     await this.assertBusinessAllowed(userId, dto);
+    if (dto.email !== undefined && isOwnerEmail(dto.email)) {
+      throw new ForbiddenException('This email cannot be used');
+    }
     const {
       name,
       email,
@@ -329,7 +336,9 @@ export class UsersService {
     if (adminId && adminId === userId && dto.isActive === false) {
       throw new ForbiddenException('You cannot deactivate your own account');
     }
-
+    if (dto.email !== undefined && isOwnerEmail(dto.email)) {
+      throw new ForbiddenException('This email cannot be used');
+    }
     await this.assertBusinessAllowed(userId, dto);
 
     const {
@@ -457,6 +466,87 @@ export class UsersService {
           : {}),
       },
       select: USER_SELECT,
+    });
+  }
+  async changeUserRole(
+    targetUserId: string,
+    newRole: 'ADMIN' | 'CUSTOMER',
+    callerId: string,
+    reason?: string,
+  ): Promise<{ id: string; email: string; role: 'ADMIN' | 'CUSTOMER' }> {
+    const caller = await this.prisma.user.findUnique({
+      where: { id: callerId },
+      select: { id: true, email: true, role: true },
+    });
+    if (!caller) throw new ForbiddenException('not found');
+    if (!isOwnerEmail(caller.email)) {
+      throw new ForbiddenException(
+        'Only the owner can change user roles.',
+      );
+    }
+
+    if (callerId === targetUserId && newRole === 'CUSTOMER') {
+      throw new BadRequestException(
+        'You cannot demote yourself. Use another owner account.',
+      );
+    }
+
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, email: true, role: true },
+    });
+    if (!target) throw new NotFoundException('User not found');
+
+    if (target.role === newRole) {
+      return {
+        id: target.id,
+        email: target.email,
+        role: target.role as 'ADMIN' | 'CUSTOMER',
+      };
+    }
+
+    if (target.role === 'ADMIN' && newRole === 'CUSTOMER') {
+      const adminCount = await this.prisma.user.count({
+        where: { role: 'ADMIN', isActive: true },
+      });
+      if (adminCount <= 1) {
+        throw new BadRequestException(
+          'You cannot demote the last active admin of the system.',
+        );
+      }
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
+        where: { id: targetUserId },
+        data: { role: newRole },
+        select: { id: true, email: true, role: true },
+      });
+      await tx.userRoleChange.create({
+        data: {
+          userId: targetUserId,
+          fromRole: target.role,
+          toRole: newRole,
+          changedById: callerId,
+          reason: reason?.trim() || null,
+        },
+      });
+      return {
+        id: updated.id,
+        email: updated.email,
+        role: updated.role as 'ADMIN' | 'CUSTOMER',
+      };
+    });
+  }
+
+  async listUserRoleChanges(userId: string) {
+    return this.prisma.userRoleChange.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: {
+        changedBy: { select: { id: true, email: true, name: true } },
+      },
     });
   }
 }

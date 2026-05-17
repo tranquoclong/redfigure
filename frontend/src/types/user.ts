@@ -5,6 +5,7 @@ export interface User {
   name?: string;
   role: 'ADMIN' | 'CUSTOMER';
   emailMarketingOptOut?: boolean;
+  isOwner?: boolean;
 
   passwordSet?: boolean;
 }
