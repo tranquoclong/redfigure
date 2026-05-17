@@ -68,8 +68,9 @@ export function NewsletterBlock({ data }: Props) {
             </p>
           </div>
           {submitted ? (
-            <div className="rounded-full border border-cyan/55 bg-cyan/10 px-5 py-3 text-center text-sm text-cyan">
-              ✓ Được rồi! Bây giờ bạn đã có trong danh sách.
+            <div className="rounded-2xl border border-cyan/55 bg-cyan/10 px-5 py-4 text-center text-sm text-cyan">
+              ✓ Hãy kiểm tra email của bạn để xác nhận đăng ký ({email}). Nó có
+              thể ở trong thư mục spam.
             </div>
           ) : (
             <div className="flex flex-col gap-2">

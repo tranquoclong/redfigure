@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search, Trash2, Download, Mail, Loader2 } from "lucide-react";
+import {
+  Search,
+  Trash2,
+  Download,
+  Mail,
+  Loader2,
+  Check,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +31,7 @@ interface Subscriber {
   email: string;
   source: string | null;
   createdAt: string;
+  confirmedAt: string | null;
 }
 
 interface ListResponse {
@@ -32,23 +41,56 @@ interface ListResponse {
 
 interface Stats {
   total: number;
+  confirmed: number;
+  pending: number;
   last24h: number;
   last7d: number;
   last30d: number;
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function StatCard({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number;
+  accent?: "lime" | "amber";
+}) {
+  const accentClass =
+    accent === "lime"
+      ? "text-lime-500"
+      : accent === "amber"
+        ? "text-amber-500"
+        : "";
   return (
     <Card>
       <CardContent className="p-5">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">
           {label}
         </p>
-        <p className="text-3xl font-bold mt-1">
+        <p className={`text-3xl font-bold mt-1 ${accentClass}`}>
           {value.toLocaleString("vi-VN")}
         </p>
       </CardContent>
     </Card>
+  );
+}
+
+function StatusBadge({ confirmedAt }: { confirmedAt: string | null }) {
+  if (confirmedAt) {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-lime-500/15 text-lime-700 dark:text-lime-400 font-medium">
+        <Check className="size-3" strokeWidth={2.5} />
+        Confirmado
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-amber-500/15 text-amber-700 dark:text-amber-400 font-medium">
+      <Clock className="size-3" strokeWidth={2.5} />
+      Pendente
+    </span>
   );
 }
 
@@ -145,8 +187,18 @@ export default function NewsletterAdminPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard label="Tổng" value={statsQuery.data?.total ?? 0} />
+        <StatCard
+          label="Đã xác nhận"
+          value={statsQuery.data?.confirmed ?? 0}
+          accent="lime"
+        />
+        <StatCard
+          label="Đang chờ xử lý"
+          value={statsQuery.data?.pending ?? 0}
+          accent="amber"
+        />
         <StatCard label="24h qua" value={statsQuery.data?.last24h ?? 0} />
         <StatCard label="7 ngày qua" value={statsQuery.data?.last7d ?? 0} />
         <StatCard label="30 ngày qua" value={statsQuery.data?.last30d ?? 0} />
@@ -182,8 +234,10 @@ export default function NewsletterAdminPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Nguồn</TableHead>
                     <TableHead>Ngày đăng ký</TableHead>
+                    <TableHead>Đã xác nhận</TableHead>
                     <TableHead className="w-20"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -194,12 +248,20 @@ export default function NewsletterAdminPage() {
                         {sub.email}
                       </TableCell>
                       <TableCell>
+                        <StatusBadge confirmedAt={sub.confirmedAt} />
+                      </TableCell>
+                      <TableCell>
                         <span className="text-xs px-2 py-1 rounded bg-muted">
                           {sub.source ?? "—"}
                         </span>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {formatDateTime(sub.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {sub.confirmedAt
+                          ? formatDateTime(sub.confirmedAt)
+                          : "—"}
                       </TableCell>
                       <TableCell>
                         <Button

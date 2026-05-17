@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import sanitizeHtml from 'sanitize-html';
 import { render } from '@react-email/render';
 import { EmailTemplateService } from './email-template.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,6 +20,8 @@ import { CustomQuoteSentCustomerEmail } from './templates/custom-quote-sent-cust
 import { AffiliateWelcomeEmail } from './templates/affiliate-welcome';
 import { AffiliatePaymentRequestAdminEmail } from './templates/affiliate-payment-request-admin';
 import { AffiliatePaymentReceivedEmail } from './templates/affiliate-payment-received';
+import { NewsletterConfirmEmail } from './templates/newsletter-confirm';
+
 
 function formatCurrency(value: number): string {
   return value.toLocaleString('vi-VN', {
@@ -962,4 +965,96 @@ export class EmailService {
       unsubscribeOneClickUrl: params.unsubscribeOneClickUrl,
     });
   }
+  async sendNewsletterConfirm(params: { to: string; confirmUrl: string }) {
+    const { subject, html } = await this.renderFromDb(
+      'newsletter-confirm',
+      {
+        link_confirmar: params.confirmUrl,
+        email_cliente: params.to,
+      },
+      () => render(NewsletterConfirmEmail({ confirmUrl: params.confirmUrl })),
+      'Xác nhận đăng ký nhận bản tin RedFigure',
+    );
+
+    return this.sendMail({ to: params.to, subject, html });
+  }
+  async sendCampaign(params: {
+    to: string;
+    subject: string;
+    html: string;
+    unsubscribeOneClickUrl?: string;
+  }) {
+    const safeHtml = sanitizeHtml(params.html, CAMPAIGN_HTML_ALLOWLIST);
+    return this.sendMail({
+      to: params.to,
+      subject: params.subject,
+      html: safeHtml,
+      unsubscribeOneClickUrl: params.unsubscribeOneClickUrl,
+    });
+  }
 }
+
+const CAMPAIGN_HTML_ALLOWLIST: sanitizeHtml.IOptions = {
+  allowedTags: [
+    'p',
+    'br',
+    'span',
+    'div',
+    'a',
+    'img',
+    'strong',
+    'em',
+    'b',
+    'i',
+    'u',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'ul',
+    'ol',
+    'li',
+    'blockquote',
+    'code',
+    'pre',
+    'hr',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
+  ],
+  allowedAttributes: {
+    a: ['href', 'target', 'rel', 'style'],
+    img: ['src', 'alt', 'width', 'height', 'style'],
+    '*': ['style', 'class'],
+  },
+  allowedSchemes: ['http', 'https', 'mailto'],
+  allowedSchemesByTag: {
+    img: ['https'],
+  },
+  allowedStyles: {
+    '*': {
+      color: [/^#[0-9a-f]{3,8}$/i, /^rgb/, /^[a-z]+$/i],
+      'background-color': [/^#[0-9a-f]{3,8}$/i, /^rgb/, /^[a-z]+$/i],
+      'text-align': [/^(left|right|center|justify)$/],
+      'font-size': [/^\d+(?:px|em|rem|%|pt)$/],
+      'font-weight': [/^(normal|bold|\d{3})$/],
+      'font-style': [/^(normal|italic)$/],
+      'text-decoration': [/^(none|underline|line-through)$/],
+      margin: [/^[\d.\s]+(?:px|em|rem|%)?$/],
+      padding: [/^[\d.\s]+(?:px|em|rem|%)?$/],
+      width: [/^\d+(?:px|%)$/],
+      height: [/^\d+(?:px|%)$/],
+    },
+  },
+  transformTags: {
+    a: sanitizeHtml.simpleTransform('a', {
+      target: '_blank',
+      rel: 'noopener noreferrer',
+    }),
+  },
+};

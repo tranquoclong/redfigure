@@ -25,7 +25,8 @@ type EmailType =
   | 'affiliate-payment-request-admin'
   | 'affiliate-payment-received'
   | 'cart-abandonment-first'
-  | 'cart-abandonment-second';
+  | 'cart-abandonment-second'
+  | 'newsletter-confirm';
 
 export interface EmailOrderItem {
   name: string;
@@ -389,6 +390,13 @@ export class EmailQueueService implements OnModuleDestroy {
     );
   }
 
+  async enqueueNewsletterConfirm(payload: { to: string; confirmUrl: string }) {
+    return this.queue.add('newsletter-confirm', {
+      type: 'newsletter-confirm',
+      payload,
+    });
+  }
+
   async processJob(job: EmailJob): Promise<void> {
     const { type, payload } = job;
 
@@ -458,6 +466,9 @@ export class EmailQueueService implements OnModuleDestroy {
         break;
       case 'cart-abandonment-second':
         await this.emailService.sendCartAbandonmentSecond(payload);
+        break;
+      case 'newsletter-confirm':
+        await this.emailService.sendNewsletterConfirm(payload);
         break;
       default:
         throw new Error(`Unknown email type: ${type}`);
